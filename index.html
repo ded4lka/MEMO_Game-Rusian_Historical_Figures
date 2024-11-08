@@ -1,0 +1,1167 @@
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <title>MEMO GAME App</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto&amp;subset=latin-ext"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&amp;subset=latin-ext"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Modak:400,700"
+      rel="stylesheet"
+    />
+    <link href="./css/font-awesome.min.css" rel="stylesheet" />
+    <link href="./css/style.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Tektur:wght@400..900&display=swap"
+      rel="stylesheet" />
+    <link rel="icon" href="./img/logo/favicon.png" type="image/png" />
+  </head>
+  <body>
+    <noscript> You need to enable JavaScript to run this app. </noscript>
+    <div id="start-screen" class="start">
+      <img src="./img/start/start.png" alt="start" class="img-start" />
+      <button id="start-button" class="button" onclick="startGameHandler()">
+        <h2 class="text">Начать игру</h2>
+      </button>
+    </div>
+    <div id="root"></div>
+
+    <script src="./js/react.production.min.js"></script>
+    <script src="./js/react-dom.production.min.js"></script>
+    <script src="./js/babel.min.js"></script>
+    <script src="./js/scroll.js"></script>
+
+    <script type="text/babel">
+      // Вызов функции при загрузке страницы
+      window.onload = function () {
+        setTimeout(scrollToTop, 100); // Задержка 100 мс перед прокруткой
+        document.body.style.overflow = "hidden"; // Блокируем прокрутку
+      };
+
+      // Функция-обработчик для запуска игры
+      let appInstance;
+
+      function startGameHandler() {
+        const rootElement = document.getElementById("root");
+        const startScreen = document.getElementById("start-screen");
+        if (rootElement && startScreen) {
+          rootElement.scrollIntoView({ behavior: "smooth" });
+
+          appInstance.startGame(); // Запускаем игру
+        }
+      }
+
+      class App extends React.Component {
+        constructor(props) {
+          super(props);
+          this.state = {
+            numbers: Array(36).fill().map(() => ({
+              value: 0,
+              clicked: false,
+              found: false
+            })),
+            isPlaying: false,
+            gameMessage: "",
+            clicks: 0,
+            style: "hero",
+            gameEnd: false,
+            currentPlayer: 1, // Добавляем текущего игрока
+            scores: { player1: 0, player2: 0 }, // Добавляем счет игроков
+            openModalId: null, // Хранит ID открытого модального окна
+            isClickable: true,
+          };
+
+          App.instance = this;
+          this.startGame = this.startGame.bind(this);
+          this.exitGame = this.exitGame.bind(this);
+          this.openModal = this.openModal.bind(this);
+          this.closeModal = this.closeModal.bind(this);
+        }
+      openModal(modalId) {
+        this.setState({ openModalId: modalId });
+      }
+      // Закрыть любое открытое модальное окно
+      closeModal() {
+        this.setState({ openModalId: null });
+      }
+      startGame() {
+        if (this.state.isPlaying === false) {
+          // Генерация 18 уникальных чисел от 0 до 17
+          const uniqueNumbers = [];
+          while (uniqueNumbers.length < 18) {
+            const number = Math.floor(Math.random() * 36); // Числа от 0 до 36
+            if (!uniqueNumbers.includes(number)) {
+              uniqueNumbers.push(number);
+            }
+          }
+
+          // Удваиваем каждое уникальное число
+          const riddleNumbers = uniqueNumbers.flatMap((number) => [
+            number,
+            number,
+          ]);
+
+          // Перемешиваем массив
+          let randomNumbersArray = riddleNumbers
+            .sort(() => Math.random() - 0.5)
+            .map((number) => ({
+              value: number,
+              clicked: false,
+              found: false,
+            }));
+
+          this.setState({
+            numbers: randomNumbersArray,
+            isPlaying: true,
+            gameMessage: "",
+            gameEnd: false,
+            scores: { player1: 0, player2: 0 },
+            currentPlayer: 1,
+          });
+        }
+      }
+      restartGame() {
+        const uniqueNumbers = [];
+        while (uniqueNumbers.length < 18) {
+          const number = Math.floor(Math.random() * 36); // Числа от 0 до 36
+          if (!uniqueNumbers.includes(number)) {
+            uniqueNumbers.push(number);
+          }
+        }
+
+        // Удваиваем каждое уникальное число
+        const riddleNumbers = uniqueNumbers.flatMap((number) => [
+          number,
+          number,
+        ]);
+
+          // Перемешиваем массив
+          let randomNumbersArray = riddleNumbers
+            .sort(() => Math.random() - 0.5)
+            .map((number) => ({
+              value: number,
+              clicked: false,
+              found: false,
+            }));
+
+          this.setState({
+            numbers: randomNumbersArray,
+            isPlaying: true,
+            gameMessage: "",
+            gameEnd: false,
+            scores: { player1: 0, player2: 0 },
+            currentPlayer: 1,
+          });
+        }
+
+        exitGame() {
+          scrollToTop();
+          this.setState({
+            numbers: [],
+            isPlaying: false,
+            gameMessage: "",
+            clicks: 0,
+            gameEnd: false,
+            scores: { player1: 0, player2: 0 },
+            currentPlayer: 1,
+          });
+          // const startElement = document.getElementById("start-screen");
+          // if (startElement) {
+          //   startElement.scrollIntoView({ behavior: "smooth" });
+          // }
+        }
+
+        checkNumber(numberIndex) {
+        if (this.state.isPlaying && this.state.isClickable) {
+          const newNumbers = [...this.state.numbers];
+          if (!newNumbers[numberIndex].clicked && !newNumbers[numberIndex].found) {
+            newNumbers[numberIndex].clicked = true;
+
+            this.setState(
+              {
+                numbers: newNumbers,
+                clicks: this.state.clicks + 1
+              },
+              () => {
+                if (this.state.clicks === 2) {
+                  this.setState({ isClickable: false }); // Блокируем клики
+
+                  const clickedCards = newNumbers.filter((card) => card.clicked);
+                  const isMatch = clickedCards[0].value === clickedCards[1].value;
+
+                  if (isMatch) {
+                    clickedCards.forEach((card) => (card.found = true));
+                    const currentPlayer =
+                      this.state.currentPlayer === 1 ? "player1" : "player2";
+
+                    this.setState((prevState) => ({
+                      numbers: newNumbers,
+                      clicks: 0,
+                      scores: {
+                        ...prevState.scores,
+                        [currentPlayer]: prevState.scores[currentPlayer] + 1
+                      },
+                      isClickable: true // Разблокируем клики
+                    }));
+                  } else {
+                    setTimeout(() => {
+                      newNumbers.forEach((card) => {
+                        if (card.clicked) card.clicked = false;
+                      });
+                      this.setState((prevState) => ({
+                        numbers: newNumbers,
+                        clicks: 0,
+                        currentPlayer: prevState.currentPlayer === 1 ? 2 : 1,
+                        isClickable: true // Разблокируем клики
+                      }));
+                    }, 1000);
+                  }
+                }
+              }
+            );
+          }
+        }
+      }
+      componentDidUpdate() {
+        if (this.state.isPlaying) {
+          const allCardsFound = this.state.numbers.every(
+            (card) => card.found
+          );
+          if (allCardsFound) {
+            const winner =
+              this.state.scores.player1 > this.state.scores.player2
+                ? "Игрок 1 победил!"
+                : this.state.scores.player1 < this.state.scores.player2
+                  ? "Игрок 2 победил!"
+                  : "Ничья!";
+            this.setState({
+              isPlaying: false,
+              gameEnd: true,
+              gameMessage: winner,
+            });
+          }
+        }
+      }
+
+      render() {
+        const { currentPlayer, scores } = this.state;
+        const isGameEnd = this.state.gameEnd;
+        const isPlaying = this.state.isPlaying;
+        return (
+          <div className="app">
+            {isGameEnd ? (
+              <div className="popup popup--visible">
+                <h3 className="popup__message">{this.state.gameMessage}</h3>
+              </div>
+            ) : (
+              <div className="popup">
+                <h3 className="popup__message ">{this.state.gameMessage}</h3>
+              </div>
+            )}
+            <div className="header">
+              <div class="b1_of_5 big_font">Сейчас ходит:</div>
+              <div class="b1_of_5 players">
+                <div
+                  className={`player icon1 ${currentPlayer === 1 ? "turn" : ""
+                    }`}
+                >
+                  <p>Игрок 1</p>
+                </div>
+                <div
+                  className={`player icon2 ${currentPlayer === 2 ? "turn" : ""
+                    }`}
+                >
+                  <p>Игрок 2</p>
+                </div>
+              </div>
+              <div class="b1_of_5">
+                <div class="vertical-line"></div>
+              </div>
+              <div class="b1_of_5 big_font">Результат:</div>
+              <div class="b1_of_5">
+                <div class="player icon1">
+                  <p className="points">: {scores.player1}</p>
+                </div>
+                <div class="player icon2">
+                  <p className="points">: {scores.player2}</p>
+                </div>
+              </div>
+            </div>
+            <div class="main">
+              <aside class="left">
+                <div class="header_aside">
+                  <img
+                    src="./img/logo/favicon.png"
+                    width="96px"
+                    height="96px"
+                  ></img>
+                  <p>
+                    Исторические<br></br>личности
+                  </p>
+                </div>
+                <div class="body_aside">
+                  <button onClick={() => this.openModal(0)} class="card">
+                    <img src="./img/hero/hero-0.png"></img>
+                    <p>Александр Григорьевич Столетов</p>
+                  </button>
+                  <button onClick={() => this.openModal(1)} class="card">
+                    <img src="./img/hero/hero-1.png"></img>
+                    <p>Павел Николаевич Яблочков</p>
+                  </button>
+                  <button onClick={() => this.openModal(2)} class="card">
+                    <img src="./img/hero/hero-2.png"></img>
+                    <p>Иван Михайлович Сеченов</p>
+                  </button>
+                  <button onClick={() => this.openModal(3)} class="card">
+                    <img src="./img/hero/hero-3.png"></img>
+                    <p>Александр Михайлович Цвет</p>
+                  </button>
+                  <button onClick={() => this.openModal(4)} class="card">
+                    <img src="./img/hero/hero-4.png"></img>
+                    <p>Николай Андреевич Римский-Корсаков</p>
+                  </button>
+                  <button onClick={() => this.openModal(5)} class="card">
+                    <img src="./img/hero/hero-5.png"></img>
+                    <p>Константин Константинович Рокоссовский</p>
+                  </button>
+                  <button onClick={() => this.openModal(6)} class="card">
+                    <img src="./img/hero/hero-6.png"></img>
+                    <p>Иван Константинович Айвазовский</p>
+                  </button>
+                  <button onClick={() => this.openModal(7)} class="card">
+                    <img src="./img/hero/hero-7.png"></img>
+                    <p>Пётр Ильич Чайковский</p>
+                  </button>
+                  <button onClick={() => this.openModal(8)} class="card">
+                    <img src="./img/hero/hero-8.png"></img>
+                    <p>Александр Сергеевич Пушкин</p>
+                  </button>
+                  <button onClick={() => this.openModal(9)} class="card">
+                    <img src="./img/hero/hero-9.png"></img>
+                    <p>Фёдор Михайлович Достоевский</p>
+                  </button>
+                  <button onClick={() => this.openModal(10)} class="card">
+                    <img src="./img/hero/hero-10.png"></img>
+                    <p>Лев Николаевич Толстой</p>
+                  </button>
+                  <button onClick={() => this.openModal(11)} class="card">
+                    <img src="./img/hero/hero-11.png"></img>
+                    <p>Дмитрий Дмитриевич Шостакович</p>
+                  </button>
+                  <button onClick={() => this.openModal(12)} class="card">
+                    <img src="./img/hero/hero-12.png"></img>
+                    <p>Илья Ефимович Репин</p>
+                  </button>
+                  <button onClick={() => this.openModal(13)} class="card">
+                    <img src="./img/hero/hero-13.png"></img>
+                    <p>Анна Андреевна Ахматова</p>
+                  </button>
+                  <button onClick={() => this.openModal(14)} class="card">
+                    <img src="./img/hero/hero-14.png"></img>
+                    <p>Пётр Иванович Багратион</p>
+                  </button>
+                  <button onClick={() => this.openModal(15)} class="card">
+                    <img src="./img/hero/hero-15.png"></img>
+                    <p>Дмитрий Иванович Донской</p>
+                  </button>
+                  <button onClick={() => this.openModal(16)} class="card">
+                    <img src="./img/hero/hero-16.png"></img>
+                    <p>Пётр Александрович Румянцев</p>
+                  </button>
+                  <button onClick={() => this.openModal(17)} class="card">
+                    <img src="./img/hero/hero-17.png"></img>
+                    <p>Александр Васильевич Суворов</p>
+                  </button>
+                  <button onClick={() => this.openModal(18)} class="card">
+                    <img src="./img/hero/hero-18.png"></img>
+                    <p>Георгий Константинович Жуков</p>
+                  </button>
+                  <button onClick={() => this.openModal(19)} class="card">
+                    <img src="./img/hero/hero-19.png"></img>
+                    <p>Павел Степанович Нахимов</p>
+                  </button>
+                  <button onClick={() => this.openModal(20)} class="card">
+                    <img src="./img/hero/hero-20.png"></img>
+                    <p>Михаил Илларионович Кутузов</p>
+                  </button>
+                  <button onClick={() => this.openModal(21)} class="card">
+                    <img src="./img/hero/hero-21.png"></img>
+                    <p>Алексей Петрович Ермолов</p>
+                  </button>
+                  <button onClick={() => this.openModal(22)} class="card">
+                    <img src="./img/hero/hero-22.png"></img>
+                    <p>Михаил Васильевич Ломоносов</p>
+                  </button>
+                  <button onClick={() => this.openModal(23)} class="card">
+                    <img src="./img/hero/hero-23.png"></img>
+                    <p>София Васильевна Ковалевская</p>
+                  </button>
+                  <button onClick={() => this.openModal(24)} class="card">
+                    <img src="./img/hero/hero-24.png"></img>
+                    <p>Константин Эдуардович Циолковский</p>
+                  </button>
+                  <button onClick={() => this.openModal(25)} class="card">
+                    <img src="./img/hero/hero-25.png"></img>
+                    <p>Дмитрий Иванович Менделеев</p>
+                  </button>
+                  <button onClick={() => this.openModal(26)} class="card">
+                    <img src="./img/hero/hero-26.png"></img>
+                    <p>Сергей Павлович Королёв</p>
+                  </button>
+                  <button onClick={() => this.openModal(27)} class="card">
+                    <img src="./img/hero/hero-27.png"></img>
+                    <p>Сергей Юльевич Витте</p>
+                  </button>
+                  <button onClick={() => this.openModal(28)} class="card">
+                    <img src="./img/hero/hero-28.png"></img>
+                    <p>Алексей Николаевич Косыгин</p>
+                  </button>
+                  <button onClick={() => this.openModal(29)} class="card">
+                    <img src="./img/hero/hero-29.png"></img>
+                    <p>Пётр Аркадьевич Столыпин</p>
+                  </button>
+                  <button onClick={() => this.openModal(30)} class="card">
+                    <img src="./img/hero/hero-30.png"></img>
+                    <p>Михаил Михайлович Сперанский</p>
+                  </button>
+                  <button onClick={() => this.openModal(31)} class="card">
+                    <img src="./img/hero/hero-31.png"></img>
+                    <p>Василий Васильевич Голицын</p>
+                  </button>
+                  <button onClick={() => this.openModal(32)} class="card">
+                    <img src="./img/hero/hero-32.png"></img>
+                    <p>Вячеслав Константинович Плеве</p>
+                  </button>
+                  <button onClick={() => this.openModal(33)} class="card">
+                    <img src="./img/hero/hero-33.png"></img>
+                    <p>Иван Григорьевич Чернышёв</p>
+                  </button>
+                  <button onClick={() => this.openModal(34)} class="card">
+                    <img src="./img/hero/hero-34.png"></img>
+                    <p>Николай Алексеевич Милютин</p>
+                  </button>
+                  <button onClick={() => this.openModal(35)} class="card">
+                    <img src="./img/hero/hero-35.png"></img>
+                    <p>Алексей Андреевич Аракчеев</p>
+                  </button>
+                </div>
+              </aside>
+
+              <div className="riddle">
+                  {this.state.numbers.map((number, index) => {
+                    let classes = "riddle__tile ";
+                    let showTile = null;
+
+                    if (number.clicked || number.found) {
+                      showTile = "img/hero/hero-" + number.value + ".png";
+                      classes += "tile_animation";
+                    } else {
+                      showTile = "img/card.svg";
+                    }
+                    return (
+                      <img
+                        src={showTile}
+                        className={classes}
+                        onClick={this.checkNumber.bind(this, index)}
+                      />
+                    );
+                  })}
+              </div>
+              <aside class="right">
+                <div class="header_aside">
+                  <p>
+                    memo
+                  </p>
+                </div>
+                <div class="body_aside_right">
+                  <button class="aside_but" onClick={() => appInstance.restartGame()}>
+                    <p class="aside_p">Начать заново</p>
+                    <img src="./img/icons/restart.png"></img>
+                  </button>
+                  <button class="aside_but" onClick={() => this.openModal(36)}>
+                    <p class="aside_p">Правила игры</p>
+                    <img src="./img/icons/rules.png"></img>
+                  </button>
+                  <button id="exit" class="aside_but"onClick={() => appInstance.exitGame()} >
+                    <p class="aside_p">Выйти</p>
+                    <img src="./img/icons/exit.png"></img>
+                  </button>
+                </div>
+              </aside>
+            </div>
+            <hr />
+            <p className="author detail">
+              © IRIT-22ST{" "}
+              <a
+                href="#"
+                className="detail"
+                title="IRIT-22ST - Front-end developer"
+                target="_blank"
+              >ы
+                <i className="fa fa-link"></i>
+              </a>{" "}
+              <a
+                href="#"
+                className="detail"
+                title="IRIT-22ST - linkedIn"
+                target="_blank"
+              >
+                <i className="fa fa-linkedin-square"></i>
+              </a>
+            </p>
+            {this.state.openModalId === 0 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/0.png"></img>
+                  <div class="b1of2">
+                    <h2>Александр<br></br>Григорьевич<br></br>Столетов</h2>
+                    <hr></hr>
+                    <p>
+                      Александр Григорьевич Столетов был выдающимся русским физиком, внёсшим вклад в электрофизику и исследование фотоэлектрических явлений. Он первым обнаружил и объяснил фотоэффект, что стало важным шагом к развитию квантовой физики. Его исследования фотоэлектрических эффектов заложили основу для создания фотоэлементов и развития солнечной энергетики.
+                      <br></br>
+                      <br></br>Столетов также разрабатывал методы измерения силы магнитных полей, что способствовало развитию электромагнитной теории. Его труды высоко ценятся в области физики, а его имя остаётся в памяти как одного из пионеров в изучении электрических явлений.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 1 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/1.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Павел<br></br>Николаевич<br></br>Яблочков</h2>
+                    <hr></hr>
+                    <p>
+                      Павел Яблочков – русский инженер и изобретатель, Павел Николаевич Яблочков известен своим изобретением электрической "свечи Яблочкова," или дуговой лампы. Эта лампа произвела революцию в освещении, став одной из первых систем уличного освещения в Европе. Яблочков также разрабатывал методы передачи электроэнергии и создания электрических сетей.
+                      <br></br>
+                      <br></br>Его работа по внедрению электрического освещения принесла ему мировую славу, и его лампы начали использоваться на улицах Парижа и других городов. Открытие Яблочкова стало важным шагом в развитии электротехники, и он вошёл в историю как один из пионеров электрического освещения.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 2 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/2.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Иван<br></br>Михайлович<br></br>Сеченов</h2>
+                    <hr></hr>
+                    <p>
+                      Иван Михайлович Сеченов, основоположник русской физиологии, считается отцом русской нейрофизиологии. Его исследования нервной системы, особенно рефлекторной активности, оказали большое влияние на науку о поведении и психологии. Сеченов ввёл в научный оборот термин "физиология мозга" и открыл феномен торможения в центральной нервной системе.
+                      <br></br><br></br>
+                      Его книга "Рефлексы головного мозга" стала революционной для своего времени и заложила основы для многих исследований в области психологии и медицины. Работы Сеченова оказали влияние на развитие учения о высшей нервной деятельности и служили основой для научных изысканий Павлова и других физиологов.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 3 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/3.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Александр<br></br>Михайлович<br></br>Цвет</h2>
+                    <hr></hr>
+                    <p>
+                      Александр Михайлович Цвет был ботаником и физиологом растений, но наиболее известен как создатель метода хроматографии. Его метод позволил разделять вещества на составляющие части, что стало важным достижением в биохимии. Цвет разработал метод разделения растительных пигментов, который впоследствии широко использовался в химии и биологии.
+                      <br></br><br></br>
+                      Хроматография стала важнейшим методом для анализа и идентификации веществ, и её применение нашло место в таких областях, как медицина, фармакология и экологические исследования. Открытие Цвета сыграло ключевую роль в развитии химических методов исследования и его вклад высоко ценится в научном мире."
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 4 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/4.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Николай<br></br>Андреевич<br></br>Римский-Корсаков</h2>
+                    <hr></hr>
+                    <p>
+                      Николай Андреевич Римский-Корсаков – русский композитор и дирижёр, выдающийся представитель "Могучей кучки," чья музыка пронизана русскими народными мотивами и восточными влияниями. Он внёс значительный вклад в развитие русского классического наследия, став одним из создателей национальной музыкальной школы. Его произведения отличаются богатой оркестровкой и виртуозным использованием инструментов.
+                      <br></br><br></br>
+                      Одним из его самых известных сочинений является симфоническая сюита "Шехеразада," вдохновленная сказками "Тысячи и одной ночи." Его оперы, такие как "Снегурочка," "Млада," и "Садко," также обогатили российскую оперную сцену. Римский-Корсаков был талантливым педагогом, обучившим многих композиторов, включая Глазунова и Стравинского.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 5 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/5.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Константит<br></br>Константинович<br></br>Рокоссовский</h2>
+                    <hr></hr>
+                    <p>
+                      Константин Рокоссовский – выдающийся советский полководец, маршал Советского Союза и Польши, известный своей стратегической интуицией и тактическим мастерством. Во время Великой Отечественной войны Рокоссовский командовал войсками в нескольких крупных операциях, включая Московскую битву, Сталинградскую битву и Висло-Одерскую операцию. Его умение сочетать гибкость и дисциплину сделали его одним из самых эффективных командующих.
+                      <br></br><br></br>
+                      После войны Рокоссовский активно участвовал в восстановлении польской армии, укрепляя связи между Польшей и СССР. Он был известен своей прямотой и неподкупностью, что вызывало уважение как среди соратников, так и среди подчинённых. Рокоссовский также стал символом советско-польского сотрудничества и одним из наиболее ярких представителей военного искусства.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 6 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/6.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Иван<br></br>Константинович<br></br>Айвазовский</h2>
+                    <hr></hr>
+                    <p>
+                      Иван Константинович Айвазовский, великий русский маринист армянского происхождения, посвятил свою карьеру изображению моря во всех его проявлениях. Его картины, такие как "Девятый вал," демонстрируют величественную мощь природы и наполнены драматизмом. Айвазовский владел исключительной техникой, позволяющей ему изображать свет и движение воды.
+                      <br></br><br></br>
+                      Помимо морских пейзажей, Айвазовский также писал сцены с участием кораблей и морских баталий, показывая исторические и современные события. Его картины отличает реалистичность и тонкость исполнения, что делает Айвазовского одним из величайших художников XIX века. Картины Айвазовского выставлены в музеях по всему миру, и его работы продолжают вдохновлять зрителей.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 7 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/7.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Пётр<br></br>Ильич<br></br>Чайковский</h2>
+                    <hr></hr>
+                    <p>
+                      Пётр Ильич Чайковский является одним из наиболее известных и почитаемых композиторов XIX века. Его музыка сочетает русские мелодические элементы с западными композиционными техниками, что делает его произведения уникальными и эмоционально насыщенными. Чайковский написал многочисленные симфонии, оперы, а также стал основоположником балетного жанра в России.
+                      <br></br><br></br>
+                      Его балеты "Лебединое озеро," "Спящая красавица" и "Щелкунчик" являются шедеврами, которые и по сей день исполняются по всему миру. Помимо балетов, он известен такими произведениями, как Симфония №6 "Патетическая" и фортепианный концерт №1. Музыка Чайковского глубоко личная и передаёт широкий спектр эмоций, от лирической тоски до ликующей радости.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 8 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/8.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Александр<br></br>Сергеевич<br></br>Пушкин</h2>
+                    <hr></hr>
+                    <p>
+                      Александр Сергеевич Пушкин, величайший русский поэт, считается создателем современного русского литературного языка. Его произведения разнообразны по жанрам и стилю, от лирической поэзии до эпических поэм и прозы. Роман в стихах "Евгений Онегин" является квинтэссенцией русского духа и считается первым крупным романом на русском языке.
+                      <br></br><br></br>
+                      Пушкин также известен своими драматическими произведениями, такими как "Борис Годунов," которые показали мощь его поэтического слова в театральной форме. Его творчество оказало огромное влияние на русскую литературу, определив её развитие на многие годы вперёд. Темы свободы, чести и любви, затронутые Пушкиным, остаются актуальными и сегодня.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 9 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/9.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Фёдор<br></br>Михайлович<br></br>Достоевский</h2>
+                    <hr></hr>
+                    <p>
+                      Фёдор Михайлович Достоевский – один из самых глубоких и влиятельных писателей в истории мировой литературы, исследующий вопросы морали, веры и человеческой психологии. Его романы, такие как "Преступление и наказание" и "Братья Карамазовы," стали философскими произведениями, задавая вопросы о природе добра и зла, грехе и искуплении.
+                      <br></br><br></br>
+                      Литературные герои Достоевского сложны и полны внутренних противоречий, что делает его работы уникальными в русской и мировой литературе. Его произведения глубоко затрагивают человеческую душу и раскрывают её тёмные стороны, оставаясь актуальными и в наши дни. Достоевский также оказал значительное влияние на последующих писателей и философов, таких как Камю и Ницше.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 10 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/10.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Лев<br></br>Николаевич<br></br>Толстой</h2>
+                    <hr></hr>
+                    <p>
+                      Лев Николаевич Толстой – выдающийся русский писатель и мыслитель, автор эпопеи "Война и мир" и романа "Анна Каренина." Его произведения исследуют сложные вопросы нравственности, социальной справедливости и духовного поиска. Толстой критиковал общественные устои и стремился найти смысл жизни через религию и моральное совершенствование.
+                      <br></br><br></br>
+                      Позднее Толстой создал свою философию ненасилия и христианства, которая повлияла на таких деятелей, как Махатма Ганди. Его творчество затрагивает глубоко гуманистические и универсальные темы, и его произведения стали неотъемлемой частью мировой литературы. Лев Толстой оставил большой след в культуре и литературе, его работы вдохновляют читателей и сегодня.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 11 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/11.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Дмитрий<br></br>Дмитриевич<br></br>Шостакович</h2>
+                    <hr></hr>
+                    <p>
+                      Дмитрий Дмитриевич Шостакович – один из крупнейших композиторов XX века, чья музыка сочетает в себе личный стиль и элементы советской идеологии. Шостакович известен своим мощным и трагическим стилем, отражающим противоречия эпохи. Его музыка, в том числе знаменитая Симфония №7 "Ленинградская," стала символом борьбы и выживания.
+                      <br></br><br></br>
+                      Шостакович создал более 15 симфоний, множество квартетов и фортепианных произведений, которые стали классикой XX века. Его творчество часто подвергалось цензуре и критике, но он сумел сохранить творческую свободу, создавая произведения, которые трогают своей искренностью и глубиной.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 12 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/12.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Илья<br></br>Ефимович<br></br>Репин</h2>
+                    <hr></hr>
+                    <p>
+                      Илья Ефимович Репин – великий русский художник, один из ведущих мастеров реалистического искусства XIX века. Его картины, такие как "Бурлаки на Волге" и "Иван Грозный и сын его Иван," стали классикой русского изобразительного искусства. Репин в своих работах старался передать духовный мир своих персонажей и реалии русской жизни.
+                      <br></br><br></br>
+                      Репин работал в жанрах портрета, исторической и жанровой живописи. Его искусство отличает внимание к деталям и глубокое понимание психологической стороны образов. Картины Репина передают эмоциональную напряжённость и остро отражают социальные и исторические проблемы.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 13 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/13.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Анна<br></br>Андреевна<br></br>Ахматова</h2>
+                    <hr></hr>
+                    <p>
+                      Анна Ахматова, одна из крупнейших поэтесс Серебряного века, известна своими лирическими и трагическими стихотворениями, отражающими эпоху революций и репрессий. Её поэзия пронизана темами любви, горя и трагедии, в ней ощущается глубокий трагизм человеческой судьбы.
+                      <br></br><br></br>
+                      Ахматова стала голосом своего поколения, её поэма "Реквием" стала символом страданий советского народа во время репрессий. Она оставила после себя наследие, которое продолжает вдохновлять и трогать читателей по всему миру.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 14 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/14.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Пётр<br></br>Иванович<br></br>Багратион</h2>
+                    <hr></hr>
+                    <p>
+                      Пётр Иванович Багратион, генерал русской армии грузинского происхождения, отличился в сражениях за независимость России и особенно проявил себя во время Отечественной войны 1812 года. Багратион участвовал в многочисленных кампаниях, включая Итальянский и Швейцарский походы Суворова, где показал себя смелым и умелым военачальником.
+                      <br></br><br></br>
+                      Одним из ключевых событий его карьеры стало Бородинское сражение, где он возглавил левый фланг русской армии и, несмотря на тяжёлое ранение, продолжал руководить войсками. Его самоотверженность вдохновляла солдат, и после его смерти он стал символом мужества и патриотизма. Багратион был похоронен на Бородинском поле, а его образ остался в истории как образец героизма.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 15 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/15.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Дмитрий<br></br>Иванович<br></br>Донской</h2>
+                    <hr></hr>
+                    <p>
+                      Великий князь московский, Дмитрий Иванович (Донской), вошёл в историю как герой Куликовской битвы, состоявшейся в 1380 году. Под его руководством русские войска одержали первую крупную победу над Золотой Ордой, что ознаменовало начало освобождения Руси от монгольского ига. Донской смог объединить русские княжества перед лицом врага, что стало важным шагом к укреплению Московского княжества.
+                      <br></br><br></br>
+                      После Куликовской битвы Дмитрий Донской стал символом национального единства и борьбы за независимость. Он также укрепил Москву, построив белокаменные стены Кремля, что сыграло ключевую роль в защите города. Его победа на Куликовом поле имела не только военное, но и культурное значение, заложив основу для объединения русских земель.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 16 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/16.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Пётр<br></br>Александрович<br></br>Румянцев</h2>
+                    <hr></hr>
+                    <p>
+                      Пётр Александрович Румянцев был выдающимся русским полководцем и реформатором, который внёс значительный вклад в военное искусство XVIII века. Он прославился в русско-турецких войнах, где одержал несколько значительных побед, включая сражения при Ларге и Кагуле, за что получил титул графа Задунайского.
+                      <br></br><br></br>
+                      Румянцев проявил себя как талантливый стратег, разработавший новые тактические приёмы, такие как рассыпной строй, которые значительно повысили боевые возможности русской армии. Его реформы в армии и успешные кампании обеспечили доминирование России на южных рубежах. Румянцев также участвовал в разработке военно-политических стратегий, направленных на укрепление позиций России в Европе.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 17 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/17.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Александр<br></br>Васильевич<br></br>Суворов</h2>
+                    <hr></hr>
+                    <p>
+                      Александр Васильевич Суворов, один из величайших полководцев в истории России, не проиграл ни одного сражения. Его военные кампании отличались дерзостью, быстротой и нестандартным подходом, что позволяло ему добиваться побед в самых сложных условиях. Суворов участвовал в русско-турецких войнах, Итальянском и Швейцарском походах, где проявил себя как мастер стратегии.
+                      <br></br><br></br>
+                      Суворовская наука побеждать, известная также как "суворовская школа," включает его принципы управления войсками, такие как гибкость в тактике, упор на стремительность и высокий боевой дух. Его труд "Наука побеждать" стал настоящим руководством для военных последующих поколений. Суворов оставил огромный след в военном искусстве, и его именем названы множество улиц, училищ и наград.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 18 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/18.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Георгий<br></br>Константинович<br></br>Жуков</h2>
+                    <hr></hr>
+                    <p>
+                      Маршал Советского Союза Георгий Константинович Жуков считается одним из главных героев Великой Отечественной войны, его имя ассоциируется с решающими победами над нацистской Германией. Под его командованием были проведены такие ключевые операции, как битва под Москвой, Сталинградская битва и взятие Берлина. Жуков сыграл огромную роль в разработке военной стратегии СССР в годы войны.
+                      <br></br><br></br>
+                      Жукова уважали за его твёрдость и решимость, а также за умение действовать в условиях высокой ответственности и риска. Его военные заслуги принесли ему четыре звезды Героя Советского Союза, и его имя стало синонимом победы. После войны Жуков продолжил службу и участвовал в восстановлении страны, став одним из наиболее уважаемых военных лидеров XX века.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 19 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/19.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Павел<br></br>Степанович<br></br>Нахимов</h2>
+                    <hr></hr>
+                    <p>
+                      Павел Нахимов – адмирал русского флота, известный своей ролью в Синопском сражении и героической обороне Севастополя в Крымскую войну. Нахимов был выдающимся флотоводцем, который проявил храбрость и стратегическое мышление на море. В Синопском сражении он уничтожил турецкий флот, что стало последней крупной победой парусного флота.
+                      <br></br><br></br>
+                      Во время осады Севастополя Нахимов лично руководил обороной и поддерживал боевой дух среди моряков и солдат. Его самоотверженность и забота о подчинённых сделали его настоящим героем и символом стойкости. Память о Нахимове увековечена в России, и он остаётся одной из самых уважаемых фигур в истории русского флота.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 20 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/20.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Михаил<br></br>Илларионович<br></br>Кутузов</h2>
+                    <hr></hr>
+                    <p>
+                      Михаил Кутузов – полководец и дипломат, командовавший русской армией в Отечественной войне 1812 года. Его стратегии в борьбе против Наполеона, включая знаменитое отступление и сражение при Бородино, сыграли решающую роль в победе над французами. Кутузов сумел объединить войска и поднять боевой дух солдат, несмотря на тяжёлые потери.
+                      <br></br><br></br>
+                      Кутузов был сторонником выжидательной стратегии, что позволило ему измотать французские войска и нанести решающий удар. Его умение предвидеть действия противника и сохранять хладнокровие в самых трудных ситуациях сделали его одним из величайших полководцев России. Его вклад в историю России увековечен в культуре и литературе, и он остаётся символом военного гения.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 21 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/21.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Алексей<br></br>Петрович<br></br>Ермолов</h2>
+                    <hr></hr>
+                    <p>
+                      Алексей Ермолов – русский генерал, известный своей деятельностью на Кавказе и в Отечественной войне 1812 года. Ермолов проявил себя как решительный и смелый военачальник, способный находить нестандартные подходы к управлению войсками и обороне территории. Он участвовал в многочисленных сражениях против Наполеона, а позже возглавил кавказскую администрацию.
+                      <br></br><br></br>
+                      На Кавказе Ермолов применял тактику укрепления позиций и установления контроля над горными народами, что способствовало расширению русских границ и укреплению империи. Он также был известен своим стремлением к справедливости и жёсткому порядку, за что снискал уважение среди подчинённых и местного населения. Ермолов оставил значительный след в истории Кавказа и российской военной стратегии.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 22 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/22.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Михаил<br></br>Васильевич<br></br>Ломоносов</h2>
+                    <hr></hr>
+                    <p>
+                      Михаил Васильевич Ломоносов, русский учёный и поэт XVIII века, был одним из первых универсальных гениев России. Ломоносов внёс значительный вклад в химические, физические, астрономические и языковые исследования. Он основал Московский университет (ныне МГУ), который стал одним из ведущих образовательных центров страны.
+                      <br></br><br></br>
+                      Ломоносов активно занимался исследованиями в химии и металлургии, и его работы заложили основу для химической науки в России. Помимо естественных наук, он также интересовался русским языком и литературой, развивал теорию русского стихосложения. Его достижения и разносторонние знания сделали его ключевой фигурой в формировании российской науки.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 23 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/23.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>София<br></br>Васильевна<br></br>Ковалевская</h2>
+                    <hr></hr>
+                    <p>
+                      София Васильевна Ковалевская была первой женщиной-математиком в России и первой женщиной-профессором в Европе. Её труды в области математического анализа, механики и дифференциальных уравнений стали значительным вкладом в науку, а её достижения открыли путь для женщин в академической сфере. Ковалевская стала первой женщиной, получившей степень доктора философии в математике.
+                      <br></br><br></br>
+                      Её работы в области вращения твёрдого тела и решения уравнений привлекли внимание ведущих учёных Европы. Ковалевская также увлекалась литературой, писала рассказы и статьи, раскрывая личный опыт и борьбу женщин за равноправие. Она остаётся символом не только научного, но и социального прогресса.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 24 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/24.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Константин<br></br>Эдуардович<br></br>Циолковский</h2>
+                    <hr></hr>
+                    <p>
+                      Константин Эдуардович Циолковский, один из основоположников космонавтики, считается "отцом русской космонавтики." Он заложил теоретические основы для создания ракет и освоения космоса, разработав концепции реактивного движения и многоступенчатой ракеты. Его идеи оказали влияние на развитие ракетостроения, особенно на работу таких учёных, как Королёв.
+                      <br></br><br></br>
+                      Циолковский писал о возможности межпланетных путешествий и мечтал о будущем, где человечество сможет освоить другие планеты. Его работы, такие как "Исследование мировых пространств реактивными приборами," вдохновили многие поколения учёных и инженеров, заложив основы для освоения космоса.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 25 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/25.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Дмитрий<br></br>Иванович<br></br>Менделеев</h2>
+                    <hr></hr>
+                    <p>
+                      Дмитрий Иванович Менделеев, великий русский химик, создатель периодической таблицы химических элементов, которая стала важнейшим открытием в химии. Менделеев систематизировал химические элементы по их атомной массе и свойствам, что позволило предсказать существование ещё не открытых элементов. Его таблица стала основой современной химии и оказала огромное влияние на науку.
+                      <br></br><br></br>
+                      Помимо химии, Менделеев занимался исследованиями в физике, метрологии и других областях. Он также разрабатывал методы нефтепереработки и занимался вопросами сельского хозяйства. Его вклад в науку огромен, и его работы продолжают использоваться и сегодня.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 26 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/26.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Сергей<br></br>Павлович<br></br>Королёв</h2>
+                    <hr></hr>
+                    <p>
+                      Сергей Павлович Королёв, советский инженер и конструктор, является основоположником практической космонавтики. Под его руководством СССР запустил первый искусственный спутник Земли и отправил в космос первого человека. Королёв разрабатывал ракеты и системы для освоения космоса, что принесло Советскому Союзу первенство в космической гонке.
+                      <br></br><br></br>
+                      Королёв был не только талантливым инженером, но и стратегом, понимающим значимость космических исследований. Его вклад в науку и технику трудно переоценить, и он по праву считается одним из самых влиятельных людей в истории космонавтики. В честь Королёва назван город, и его достижения стали символом человеческой тяги к звёздам.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 27 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/27.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Сергей<br></br>Юльевич<br></br>Витте</h2>
+                    <hr></hr>
+                    <p>
+                      Сергей Юльевич Витте был выдающимся российским государственным деятелем, который провёл масштабные реформы в конце XIX – начале XX века. Как министр финансов, он провёл денежную реформу, введя золотой рубль, и стабилизировал экономику, привлекая иностранные инвестиции и развивая железнодорожную сеть, что способствовало модернизации России.
+                      <br></br><br></br>
+                      Витте также сыграл важную роль в заключении Портсмутского мирного договора, завершив Русско-японскую войну. Он стал первым председателем Совета министров Российской империи и инициировал Манифест 17 октября 1905 года, который провозглашал гражданские свободы и создал Государственную думу. Его реформаторская деятельность заложила основы для экономического роста, однако сопротивление консерваторов ограничивало его инициативы.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 28 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/28.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Алексей<br></br>Николаевич<br></br>Косыгин</h2>
+                    <hr></hr>
+                    <p>
+                      Алексей Николаевич Косыгин был советским государственным деятелем и одним из ведущих реформаторов экономики в период СССР. В 1965 году он инициировал экономическую реформу, направленную на децентрализацию управления промышленностью, переход к хозяйственному расчёту и стимулирование производительности. Косыгинская реформа улучшила экономическую ситуацию, но столкнулась с сопротивлением консервативных сил.
+                      <br></br><br></br>
+                      В течение своей карьеры Косыгин возглавлял Совет Министров СССР и руководил экономическим планированием страны. Он также играл ключевую роль в международной политике, устанавливая торговые связи с западными странами. Его реформы были частично свёрнуты в 1970-е годы, но его вклад в экономическое развитие СССР признан значительным.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 29 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/29.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Пётр<br></br>Аркадьевич<br></br>Столыпин</h2>
+                    <hr></hr>
+                    <p>
+                      Пётр Аркадьевич Столыпин, российский премьер-министр начала XX века, известен своими аграрными реформами, которые имели цель укрепить крестьянство и стимулировать сельскохозяйственное производство. Его политика направлялась на создание крепких частных хозяйств и переселение крестьян на неосвоенные земли, что способствовало росту продуктивности и снижению социального напряжения.
+                      <br></br><br></br>
+                      Столыпин также пытался реформировать правовую систему, боролся с революционными движениями и способствовал укреплению самодержавия. Его фраза "им нужны великие потрясения, нам нужна великая Россия" отражала его приверженность стабильности и реформам. Несмотря на сильное сопротивление, Столыпин сумел добиться некоторых успехов, однако его убийство в 1911 году не позволило завершить многие начинания.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 30 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/30.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Михаил<br></br>Михайлович<br></br>Сперанский</h2>
+                    <hr></hr>
+                    <p>
+                      Михаил Михайлович Сперанский был выдающимся государственным деятелем и реформатором начала XIX века, разработавшим проект масштабной политической и правовой реформы в Российской империи. Он стремился укрепить государственные институты и предложил создание законодательных, исполнительных и судебных органов власти, что сделало бы управление более системным и справедливым.
+                      <br></br><br></br>
+                      Сперанский также внёс огромный вклад в кодификацию российского законодательства, которая была завершена уже после его смерти. Несмотря на то что многие его реформы не были полностью реализованы, он заложил основы для будущих преобразований в России и остался в истории как выдающийся мыслитель и стратег.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 31 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/31.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Василий<br></br>Васильевич<br></br>Голицын</h2>
+                    <hr></hr>
+                    <p>
+                      Василий Васильевич Голицын был одним из ведущих государственных деятелей и дипломатов в период правления царевны Софьи Алексеевны. Он сыграл важную роль в переговорах с Крымским ханством и Речью Посполитой, поддерживая политику укрепления международных позиций России. Голицын был приверженцем реформ и стремился к европейской модернизации.
+                      <br></br><br></br>
+                      Он разрабатывал планы реформирования военной службы, поддерживал торговые связи с Европой и занимался усовершенствованием внутренних дел государства. Однако его деятельность прервалась в 1689 году после переворота Петра I, и его реформаторские начинания были остановлены. Тем не менее его вклад в дипломатическую политику России высоко ценится историками.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 32 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/32.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Вячеслав<br></br>Константинович<br></br>Плеве</h2>
+                    <hr></hr>
+                    <p>
+                      Вячеслав Константинович Плеве был российским государственным деятелем и министром внутренних дел в начале XX века. Он был известен как приверженец жёсткой политики по отношению к революционным и национальным движениям, включая преследования оппозиционных организаций и пресечение антиправительственных выступлений.
+                      <br></br><br></br>
+                      Плеве также инициировал ряд реформ в полиции и органах правопорядка, которые позволили усилить контроль государства. Однако его методы были непопулярны, и многие критиковали его за репрессивные действия. Он был убит в 1904 году революционерами, и его гибель стала символом роста социального напряжения в преддверии Первой русской революции.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 33 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/33.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Иван<br></br>Григорьевич<br></br>Чернышёв</h2>
+                    <hr></hr>
+                    <p>
+                      Иван Григорьевич Чернышёв был российским военным и государственным деятелем XVIII века, известным своей деятельностью в Адмиралтейств-коллегии, где он занимался развитием и управлением русского флота. Чернышёв внёс значительный вклад в усиление военно-морской мощи России и организацию обороны морских границ, способствуя успешной политике империи на Балтике.
+                      <br></br><br></br>
+                      В течение своей карьеры Чернышёв также занимался дипломатической деятельностью и вёл переговоры с иностранными державами, укрепляя позиции России на международной арене. Его работа оказала значительное влияние на военную и внешнюю политику, что помогло России развить флот и обеспечить безопасность морских рубежей.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 34 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/34.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Николай<br></br>Алексеевич<br></br>Милютин</h2>
+                    <hr></hr>
+                    <p>
+                      Николай Алексеевич Милютин был одним из ключевых реформаторов в период проведения Великих реформ в России, занимая должность государственного секретаря. Милютин сыграл важную роль в подготовке крестьянской реформы 1861 года, освободившей крестьян от крепостной зависимости. Он разрабатывал и внедрял проекты, направленные на улучшение положения крестьян и развитие земства.
+                      <br></br><br></br>
+                      Милютин также поддерживал судебные реформы и участвовал в обсуждении других инициатив, которые могли бы ослабить классовую напряжённость в стране. Его вклад в реформы Александра II имел длительное воздействие на развитие России и способствовал модернизации государственных институтов.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 35 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <img src="./img/hero_nocards/35.png" width="75%"></img>
+                  <div class="b1of2">
+                    <h2>Алексей<br></br>Андреевич<br></br>Аракчеев</h2>
+                    <hr></hr>
+                    <p>
+                      Алексей Андреевич Аракчеев был российским государственным и военным деятелем, известным своей близостью к императору Александру I и жестким управлением. Аракчеев стал автором проекта военных поселений, которые представляли собой систему, совмещающую военную службу и сельское хозяйство. Его методы управления и дисциплины были суровыми, что сделало его одним из самых противоречивых фигур своего времени.
+                      <br></br><br></br>
+                      Аракчеев также был ответственным за реформирование армии и организацию артиллерии. Его деятельность отличалась строгой дисциплиной и преданностью государственным интересам, и, несмотря на критику, он внёс значительный вклад в военную реформу. Его стиль управления и реформаторские инициативы сделали его фигуру символом порядка и контроля в российской истории.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {this.state.openModalId === 36 && (
+              <div className="modal" class="modal">
+                <button onClick={this.closeModal} class="card">X</button>
+                <div className="modal-content" class="modal-content">
+                  <div class="rules-container">
+                    <div class="b1_of_2">
+                      <h1>Правила игры MEMO</h1>
+                      <p>Эта игра поможет вам развить вашу память. Вам необходимо собрать как можно больше пар карточек, т.е. две карточки с одинаковым персонажем.</p>
+                      <img src="./img/rules/1.png"></img>
+                      <p>Перед вами игровое поле 9 х 4, то есть 18 возможных исторических личностей, скрывающихся за тыльными сторонами карт.</p>
+                      <img src="./img/rules/2.png"></img>
+                    </div>
+                    <div class="b1_of_2">
+                      <p>За один ход можно открыть две карты, после чего ход передается второму игроку. Информация о текущем ходе и количество раскрытых карт-персонажей отображаются в таблице над полем.</p>
+                      <img src="./img/rules/3.png" class="big"></img>
+                      <p>Как только игрок переворачивает две карты с одним и тем же персонажем, они переносятся из игрового поля в таблицу слева под названием “Исторические личности”. У соперника тоже собираются карты, для различия выученных исторических лиц игроками, напротив каждого такого лица появляется иконка игрока, кто перевернул две одинаковые карты с этой личностью.</p>
+                      <img src="./img/rules/4.png" class="big"></img>
+                      <p>Кликнув по личности, на переднем плане появится биографическая сводка об этом историческом лице.</p>
+                      <img src="./img/rules/5.png" class="big"></img>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      }
+    }
+    appInstance = ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
+</body>
+
+</html>
